@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Dopetrope by HTML5 UP</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <style>
+        /* Estilos para las barras laterales */
+        .sidebar-left, .sidebar-right {
+            background-color: #f2f2f2;
+            padding: 20px;
+            height: 100%;
+        }
+        .sidebar-left {
+            border-right: 1px solid #ddd;
+        }
+        .sidebar-right {
+            border-left: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body class="is-preload">
+<div id="page-wrapper">
+    <!-- Header -->
+    <section id="header">
+        <h1><a href="index.php">J&J</a></h1>
+        <nav id="nav">
+            <ul>
+                <li><a href="index.php">Home</a></li>
+                <li>
+                    <a href="#">Dropdown</a>
+                    <ul>
+                        <li><a href="#">Lorem ipsum dolor</a></li>
+                        <li><a href="#">Magna phasellus</a></li>
+                        <li><a href="#">Etiam dolore nisl</a></li>
+                    </ul>
+                </li>
+                <li><a href="left-sidebar.html">Left Sidebar</a></li>
+                <li class="current"><a href="right-sidebar.html">Right Sidebar</a></li>
+                <li><a href="no-sidebar.html">No Sidebar</a></li>
+            </ul>
+        </nav>
+    </section>
+
+    <!-- Main -->
+    <section id="main">
+        <div class="container">
+            <div class="row">
+
+                <!-- Sidebar Izquierda -->
+                <div class="col-6 sidebar-left">
+                    <h2 class="text-center mb-4">Inicio de sesión</h2>
+
+                    <div class="p-5 m-5 border bg-black text-white">
+                        <form action="procesarReg.php" method="POST">
+                            <div class="mb-3">
+                                <label for="nombre" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ingresa tu nombre" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="usuario" class="form-label">Usuario</label>
+                                <input type="text" class="form-control" id="usuario" name="usuario" placeholder="Nombre de usuario" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="contrasena" class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" id="contrasena" name="contrasena" placeholder="Contraseña" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Registrar</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Sidebar Derecha -->
+                <div class="col-6 sidebar-right">
+                    <h2 class="text-center mb-4">Registro de usuarios</h2>
+
+                    <div class="p-5 m-5 border bg-black text-white">
+                        <form action="procesarReg.php" method="POST">
+                            <div class="mb-3">
+                                <label for="nombre" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ingresa tu nombre" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="usuario" class="form-label">Usuario</label>
+                                <input type="text" class="form-control" id="usuario" name="usuario" placeholder="Nombre de usuario" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="contrasena" class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" id="contrasena" name="contrasena" placeholder="Contraseña" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Registrar</button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Scripts -->
+<script src="assets/js/jquery.min.js"></script>
+<script src="assets/js/jquery.dropotron.min.js"></script>
+<script src="assets/js/browser.min.js"></script>
+<script src="assets/js/breakpoints.min.js"></script>
+<script src="assets/js/util.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
