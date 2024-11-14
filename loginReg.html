@@ -5,42 +5,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
     <link rel="stylesheet" href="assets/css/main.css" />
-    <style>
-        /* Estilos para las barras laterales */
-        .sidebar-left, .sidebar-right {
-            background-color: #f2f2f2;
-            padding: 20px;
-            height: 100%;
-        }
-        .sidebar-left {
-            border-right: 1px solid #ddd;
-        }
-        .sidebar-right {
-            border-left: 1px solid #ddd;
-        }
-    </style>
+
 </head>
 <body class="is-preload">
 <div id="page-wrapper">
     <!-- Header -->
     <section id="header">
         <h1><a href="index.php">J&J</a></h1>
-        <nav id="nav">
-            <ul>
-                <li><a href="index.php">Home</a></li>
-                <li>
-                    <a href="#">Dropdown</a>
-                    <ul>
-                        <li><a href="#">Lorem ipsum dolor</a></li>
-                        <li><a href="#">Magna phasellus</a></li>
-                        <li><a href="#">Etiam dolore nisl</a></li>
-                    </ul>
-                </li>
-                <li><a href="left-sidebar.html">Left Sidebar</a></li>
-                <li class="current"><a href="right-sidebar.html">Right Sidebar</a></li>
-                <li><a href="no-sidebar.html">No Sidebar</a></li>
-            </ul>
-        </nav>
+        <h3> <div id="error-message" style="display: none; color: red; text-align: center; padding: 10px;"></div>
+        </h3>
     </section>
 
     <!-- Main -->
@@ -53,20 +26,16 @@
                     <h2 class="text-center mb-4">Inicio de sesión</h2>
 
                     <div class="p-5 m-5 border bg-black text-white">
-                        <form action="procesarReg.php" method="POST">
+                        <form action="index.php" method="POST">
                             <div class="mb-3">
-                                <label for="nombre" class="form-label">Nombre</label>
-                                <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ingresa tu nombre" required>
+                                <label for="usuarioLog" class="form-label">Usuario</label>
+                                <input type="text" class="form-control" id="usuarioLog" name="usuario" placeholder="Nombre de usuario" required>
                             </div>
                             <div class="mb-3">
-                                <label for="usuario" class="form-label">Usuario</label>
-                                <input type="text" class="form-control" id="usuario" name="usuario" placeholder="Nombre de usuario" required>
+                                <label for="contrasenaLog" class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" id="contrasenaLog" name="contrasena" placeholder="Contraseña" required>
                             </div>
-                            <div class="mb-3">
-                                <label for="contrasena" class="form-label">Contraseña</label>
-                                <input type="password" class="form-control" id="contrasena" name="contrasena" placeholder="Contraseña" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">Registrar</button>
+                            <button type="submit" class="btn btn-primary w-100">Iniciar Sesión</button>
                         </form>
                     </div>
                 </div>
@@ -74,21 +43,42 @@
                 <!-- Sidebar Derecha -->
                 <div class="col-6 sidebar-right">
                     <h2 class="text-center mb-4">Registro de usuarios</h2>
-
                     <div class="p-5 m-5 border bg-black text-white">
                         <form action="procesarReg.php" method="POST">
                             <div class="mb-3">
-                                <label for="nombre" class="form-label">Nombre</label>
-                                <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ingresa tu nombre" required>
+                                <label for="nombre_usuario" class="form-label">Nombre de Usuario</label>
+                                <input type="text" class="form-control" id="nombre_usuario" name="nombre_usuario" placeholder="Nombre de usuario" required>
                             </div>
                             <div class="mb-3">
-                                <label for="usuario" class="form-label">Usuario</label>
-                                <input type="text" class="form-control" id="usuario" name="usuario" placeholder="Nombre de usuario" required>
+                                <label for="correo_electronico" class="form-label">Correo Electrónico</label>
+                                <input type="email" class="form-control" id="correo_electronico" name="correo_electronico" placeholder="Correo electrónico" required>
                             </div>
                             <div class="mb-3">
                                 <label for="contrasena" class="form-label">Contraseña</label>
                                 <input type="password" class="form-control" id="contrasena" name="contrasena" placeholder="Contraseña" required>
                             </div>
+                            <div class="mb-3">
+                                <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
+                                <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="numero_tarjeta_bancaria" class="form-label">Número de Tarjeta Bancaria</label>
+                                <input type="text" class="form-control" id="numero_tarjeta_bancaria" name="numero_tarjeta_bancaria" placeholder="Número de tarjeta bancaria" pattern="\d{16,19}" required>
+
+                            </div>
+
+
+
+
+                            <div class="form-group mt-3">
+                                <label for="direccion_postal" class="form-label">Buscar Dirección Postal en Google Maps:</label>
+                                <input type="text" class="form-control" id="direccion_postal" name="direccion_postal" placeholder="Ingrese una dirección" required>
+                                <div id="map" style="height: 400px; width: 100%;" class="mt-3"></div>
+                            </div>
+
+
+
+
                             <button type="submit" class="btn btn-primary w-100">Registrar</button>
                         </form>
                     </div>
@@ -97,9 +87,82 @@
             </div>
         </div>
     </section>
+
+
+
+
+
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAcmKWHow7Xr3SUxWSvyqf-Op9-gFyyoOg&libraries=places"></script>
+
+    <script>
+        function initMap() {
+            const map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 19.432608, lng: -99.133209 },
+                zoom: 13
+            });
+
+            const input = document.getElementById('direccion_postal');
+            const autocomplete = new google.maps.places.Autocomplete(input);
+            autocomplete.bindTo('bounds', map);
+            autocomplete.setFields(['address_components', 'geometry', 'name', 'formatted_address']);
+
+            const infowindow = new google.maps.InfoWindow();
+            const marker = new google.maps.Marker({
+                map: map,
+                anchorPoint: new google.maps.Point(0, -29),
+                draggable: false
+            });
+
+            autocomplete.addListener('place_changed', function() {
+                infowindow.close();
+                marker.setVisible(false);
+                const place = autocomplete.getPlace();
+
+                if (!place.geometry) {
+                    alert("No se encontraron detalles para la dirección: '" + place.name + "'");
+                    return;
+                }
+
+                // Actualiza la ubicación del mapa y muestra el marcador
+                if (place.geometry.viewport) {
+                    map.fitBounds(place.geometry.viewport);
+                } else {
+                    map.setCenter(place.geometry.location);
+                    map.setZoom(17);
+                }
+
+                marker.setPosition(place.geometry.location);
+                marker.setVisible(true);
+
+                // Asignar la dirección completa al campo de texto
+                input.value = place.formatted_address;
+            });
+        }
+
+        // Inicializar el mapa y autocompletado al cargar la API
+        window.addEventListener('load', initMap);
+
+    </script>
 </div>
 
-<!-- Scripts -->
+
+<script>
+    // Obtener el parámetro de la URL para un error al iniciar sesión porque retorna a la misma página si no pasa
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+
+    // Mostrar el mensaje de error según el valor del parámetro
+    if (error) {
+        const errorMessageDiv = document.getElementById('error-message');
+        if (error === 'incorrect_password') {
+            errorMessageDiv.textContent = "Contraseña incorrecta.";
+        } else if (error === 'user_not_found') {
+            errorMessageDiv.textContent = "El usuario no existe.";
+        }
+        errorMessageDiv.style.display = 'block';
+    }
+</script>
 <script src="assets/js/jquery.min.js"></script>
 <script src="assets/js/jquery.dropotron.min.js"></script>
 <script src="assets/js/browser.min.js"></script>

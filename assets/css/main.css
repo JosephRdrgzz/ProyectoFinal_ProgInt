@@ -7,6 +7,11 @@
 	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
 */
 
+
+
+
+
+
 html, body, div, span, applet, object,
 iframe, h1, h2, h3, h4, h5, h6, p, blockquote,
 pre, a, abbr, acronym, address, big, cite,
@@ -33,6 +38,18 @@ body {
 	line-height: 1;
 }
 
+.sidebar-left, .sidebar-right {
+	background-color: #f2f2f2;
+	padding: 20px;
+	height: 100%;
+}
+.sidebar-left {
+	border-right: 1px solid #ddd;
+}
+.sidebar-right {
+	border-left: 1px solid #ddd;
+}
+
 ol, ul {
 	list-style: none;
 }
@@ -52,8 +69,13 @@ table {
 }
 
 body {
-	-webkit-text-size-adjust: none;
+	background-color: #252122; /* Color de fondo */
+	background-image: url("../../images/pic02.jpg"); /* Imagen de fondo */
+	background-size: cover; /* Ajuste de imagen para cubrir toda el área */
+	background-position: center; /* Centrado de imagen */
+	background-repeat: no-repeat; /* Evita repetir la imagen */
 }
+
 
 mark {
 	background-color: transparent;
@@ -84,7 +106,6 @@ input, select, textarea {
 
 	body {
 		background: #252122;
-		background-image: url("images/bg02.png");
 	}
 
 		body.is-preload *, body.is-preload *:before, body.is-preload *:after {
@@ -2264,11 +2285,9 @@ input, select, textarea {
 
 /* Main */
 
-	#main {
-		position: relative;
-		background: #f7f7f7 url("images/bg02.png");
-		padding: 4em 0 4em 0;
-	}
+		#main {
+			background-color: #827a7c;
+		}
 
 		#main:before {
 			content: '';
@@ -2276,14 +2295,14 @@ input, select, textarea {
 			top: 0;
 			left: 0;
 			width: 100%;
-			background: url("images/bg01.png");
+			background: url("../../images/pic02.jpg");
 			background-size: 100% 100%;
 			z-index: 0;
 			opacity: 0.1;
 		}
 
 		#main .major h2 {
-			background: #f7f7f7 url("images/bg02.png");
+			background-color: #827a7c;
 		}
 
 /* Footer */
