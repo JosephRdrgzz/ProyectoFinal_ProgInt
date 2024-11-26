@@ -1,4 +1,7 @@
 <?php
+
+
+
 session_start(); // Iniciar la sesión al inicio del archivo
 
 // Configuración de la base de datos
@@ -27,6 +30,7 @@ if (isset($_POST['usuario']) && isset($_POST['contrasena'])) {
     $stmt->execute();
     $result = $stmt->get_result();
 
+
     if ($result->num_rows == 1) {
         $row = $result->fetch_assoc();
 
@@ -47,6 +51,8 @@ if (isset($_POST['usuario']) && isset($_POST['contrasena'])) {
         exit();
     }
 }
+
+$is_admin = $_SESSION['administrador'] ?? false;
 
 // Manejar la acción de "Agregar al carrito"
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_producto'])) {
@@ -121,10 +127,17 @@ $carrito = [];
 if (isset($_SESSION['id_usuario'])) {
     $id_usuario = $_SESSION['id_usuario'];
     $sql_carrito = "
-        SELECT p.Nombre, c.Cantidad, p.Precio, (c.Cantidad * p.Precio) AS Total
-        FROM Carrito_Compras c
-        INNER JOIN Productos p ON c.ID_Producto = p.ID_Producto
-        WHERE c.ID_Usuario = ?";
+    SELECT 
+        c.ID_Producto_Carrito, -- Incluye el identificador único de cada fila del carrito
+        p.Fotos, 
+        p.Nombre, 
+        c.Cantidad, 
+        p.Precio, 
+        (c.Cantidad * p.Precio) AS Total
+    FROM Carrito_Compras c
+    INNER JOIN Productos p ON c.ID_Producto = p.ID_Producto
+    WHERE c.ID_Usuario = ?";
+
     $stmt_carrito = $conn->prepare($sql_carrito);
     $stmt_carrito->bind_param("i", $id_usuario);
     $stmt_carrito->execute();
@@ -133,6 +146,56 @@ if (isset($_SESSION['id_usuario'])) {
         $carrito[] = $row;
     }
 }
+
+// Manejar las acciones de aumentar o disminuir cantidad en el carrito
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['accion'])) {
+    if (isset($_SESSION['id_usuario'])) {
+        $id_producto_carrito = intval($_POST['id_producto_carrito']); // Identificar la fila específica del carrito
+        $id_usuario = $_SESSION['id_usuario'];
+        $accion = $_POST['accion']; // Acción: 'aumentar', 'disminuir', 'eliminar'
+
+        if ($accion === 'aumentar') {
+            // Aumentar la cantidad en el carrito
+            $sql_update = "UPDATE Carrito_Compras SET Cantidad = Cantidad + 1 WHERE ID_Producto_Carrito = ? AND ID_Usuario = ?";
+            $stmt_update = $conn->prepare($sql_update);
+            $stmt_update->bind_param("ii", $id_producto_carrito, $id_usuario);
+            $stmt_update->execute();
+        } elseif ($accion === 'disminuir') {
+            // Verificar la cantidad actual antes de disminuir
+            $sql_check = "SELECT Cantidad FROM Carrito_Compras WHERE ID_Producto_Carrito = ? AND ID_Usuario = ?";
+            $stmt_check = $conn->prepare($sql_check);
+            $stmt_check->bind_param("ii", $id_producto_carrito, $id_usuario);
+            $stmt_check->execute();
+            $result_check = $stmt_check->get_result();
+            $row = $result_check->fetch_assoc();
+
+            if ($row && $row['Cantidad'] > 1) {
+                // Disminuir la cantidad si es mayor a 1
+                $sql_update = "UPDATE Carrito_Compras SET Cantidad = Cantidad - 1 WHERE ID_Producto_Carrito = ? AND ID_Usuario = ?";
+                $stmt_update = $conn->prepare($sql_update);
+                $stmt_update->bind_param("ii", $id_producto_carrito, $id_usuario);
+                $stmt_update->execute();
+            } elseif ($row && $row['Cantidad'] == 1) {
+                // Si la cantidad es 1, eliminar la fila
+                $sql_delete = "DELETE FROM Carrito_Compras WHERE ID_Producto_Carrito = ? AND ID_Usuario = ?";
+                $stmt_delete = $conn->prepare($sql_delete);
+                $stmt_delete->bind_param("ii", $id_producto_carrito, $id_usuario);
+                $stmt_delete->execute();
+            }
+        } elseif ($accion === 'eliminar') {
+            // Eliminar la fila completa
+            $sql_delete = "DELETE FROM Carrito_Compras WHERE ID_Producto_Carrito = ? AND ID_Usuario = ?";
+            $stmt_delete = $conn->prepare($sql_delete);
+            $stmt_delete->bind_param("ii", $id_producto_carrito, $id_usuario);
+            $stmt_delete->execute();
+        }
+
+        // Redirigir para evitar reenvío del formulario
+        header("Location: index.php");
+        exit();
+    }
+}
+
 
 $conn->close();
 ?>
@@ -158,21 +221,45 @@ $conn->close();
 
             <!-- Columna 2: Menú de navegación centrado -->
             <div style="flex: 1; text-align: center;">
-                <nav id="nav">
-                    <ul style="display: inline-flex; gap: 15px; list-style: none; padding: 0; margin: 0;">
-                        <li class="current"><a href="index.html">Home</a></li>
-                        <li><a href="#">Categorías</a>
-                            <ul>
-                                <li><a href="#">Deportes</a></li>
-                                <li><a href="#">Acción</a></li>
-                                <li><a href="#">Mobile</a></li>
-                                <li><a href="#">?</a></li>
+                <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                    <div class="container-fluid">
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <div class="collapse navbar-collapse" id="navbarNav">
+                            <ul class="navbar-nav mx-auto">
+                                <li class="nav-item">
+                                    <a class="nav-link active" aria-current="page" href="index.php">Home</a>
+                                </li>
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Categorías
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="categoriesDropdown">
+                                        <li><a class="dropdown-item" href="#">Deportes</a></li>
+                                        <li><a class="dropdown-item" href="#">Acción</a></li>
+                                        <li><a class="dropdown-item" href="#">Mobile</a></li>
+                                        <li><a class="dropdown-item" href="#">?</a></li>
+                                    </ul>
+                                </li>
+                                <?php if ($is_admin): ?>
+                                    <li class="nav-item dropdown">
+                                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Admin
+                                        </a>
+                                        <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                                            <li><a class="dropdown-item" href="admin_editar_items.php">Editar Items</a></li>
+                                            <li><a class="dropdown-item" href="admin_historial_compras.php">Historial de Compras</a></li>
+                                        </ul>
+                                    </li>
+                                <?php endif; ?>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="loginReg.html">Cerrar Sesión</a>
+                                </li>
                             </ul>
-                        </li>
-                        <li><a href="loginReg.html">Cerrar Sesión</a></li>
-                    </ul>
-                </nav>
-            </div>
+                        </div>
+                    </div>
+                </nav>            </div>
 
             <div style="flex: 1; text-align: right;">
                 <h3>Bienvenid@: <?php echo $_SESSION['nombre_usuario'] ?? 'Invitado'; ?></h3>
@@ -202,27 +289,45 @@ $conn->close();
                                 <th>Cantidad</th>
                                 <th>Precio Unitario</th>
                                 <th>Total</th>
+                                <th>Acciones</th>
                             </tr>
                             </thead>
                             <tbody>
                             <?php $total = 0; ?>
                             <?php foreach ($carrito as $item): ?>
                                 <tr>
-                                    <!-- Imagen del producto -->
                                     <td>
-                                        <img src="<?= htmlspecialchars($item['Fotos']) ?>"
+                                        <img src="<?= htmlspecialchars($item['Fotos'] ?? 'ruta_default.png') ?>"
                                              alt="<?= htmlspecialchars($item['Nombre']) ?>"
                                              class="img-thumbnail"
                                              style="width: 80px; height: auto;">
                                     </td>
-                                    <!-- Nombre del producto -->
                                     <td><?= htmlspecialchars($item['Nombre']) ?></td>
-                                    <!-- Cantidad del producto -->
                                     <td><?= htmlspecialchars($item['Cantidad']) ?></td>
-                                    <!-- Precio unitario -->
                                     <td>$<?= number_format($item['Precio'], 2) ?> MXN</td>
-                                    <!-- Total -->
                                     <td>$<?= number_format($item['Total'], 2) ?> MXN</td>
+                                    <td>
+                                        <!-- Botón para aumentar -->
+                                        <form action="index.php" method="post" style="display: inline-block;">
+                                            <input type="hidden" name="id_producto_carrito" value="<?= htmlspecialchars($item['ID_Producto_Carrito']) ?>">
+                                            <input type="hidden" name="accion" value="aumentar">
+                                            <button type="submit" class="btn btn-sm btn-success">+</button>
+                                        </form>
+
+                                        <form action="index.php" method="post" style="display: inline-block;">
+                                            <input type="hidden" name="id_producto_carrito" value="<?= htmlspecialchars($item['ID_Producto_Carrito']) ?>">
+                                            <input type="hidden" name="accion" value="disminuir">
+                                            <button type="submit" class="btn btn-sm btn-warning">-</button>
+                                        </form>
+
+                                        <form action="index.php" method="post" style="display: inline-block;">
+                                            <input type="hidden" name="id_producto_carrito" value="<?= htmlspecialchars($item['ID_Producto_Carrito']) ?>">
+                                            <input type="hidden" name="accion" value="eliminar">
+                                            <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                                        </form>
+
+
+                                    </td>
                                 </tr>
                                 <?php $total += $item['Total']; ?>
                             <?php endforeach; ?>
@@ -231,6 +336,7 @@ $conn->close();
                             <tr>
                                 <td colspan="4" class="text-end"><strong>Total:</strong></td>
                                 <td><strong>$<?= number_format($total, 2) ?> MXN</strong></td>
+                                <td></td>
                             </tr>
                             </tfoot>
                         </table>
