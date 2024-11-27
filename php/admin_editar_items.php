@@ -193,16 +193,7 @@ $result = $conn->query("SELECT ID_Producto, Nombre FROM productos");
                                     <a class="nav-link active" aria-current="page" href="index.php">Home</a>
                                 </li>
 
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Categorías
-                                    </a>
-                                    <ul class="dropdown-menu" aria-labelledby="categoriesDropdown">
-                                        <?php while ($categoria = $result_categorias->fetch_assoc()): ?>
-                                            <li><a class="dropdown-item" href="index.php?categoria=<?= urlencode($categoria['Categoria']) ?>"><?= htmlspecialchars($categoria['Categoria']) ?></a></li>
-                                        <?php endwhile; ?>
-                                    </ul>
-                                </li>
+
                                 <?php if (isset($_SESSION['id_usuario'])): ?>
                                     <!-- Mostrar opción para ver historial de compras si el usuario está autenticado -->
                                     <li class="nav-item">

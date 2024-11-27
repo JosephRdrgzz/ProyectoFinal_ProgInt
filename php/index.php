@@ -46,18 +46,17 @@ if (isset($_POST['correo']) && isset($_POST['contrasena'])) { // Cambiar 'usuari
             exit();
         }
     } else {
-        header("Location: index.html?error=user_not_found");
+        header("Location: ../index.html?error=user_not_found");
         exit();
     }
 }
 
 
 // Obtener las categorías distintas de la base de datos
-$sql_categorias = "SELECT DISTINCT Categoria FROM Productos where Cantidad_en_almacen > 0";
+$sql_categorias = "SELECT DISTINCT Categoria FROM Productos";
 $result_categorias = $conn->query($sql_categorias);
 // Obtener la categoría seleccionada desde la URL (si existe)
 $categoria = isset($_GET['categoria']) ? $_GET['categoria'] : '';
-
 // Consulta para obtener productos filtrados por categoría
 if ($categoria) {
     $sql_productos = "SELECT * FROM Productos WHERE Categoria = ?";
@@ -68,7 +67,6 @@ if ($categoria) {
     $sql_productos = "SELECT * FROM Productos";
     $stmt_productos = $conn->prepare($sql_productos);
 }
-
 $stmt_productos->execute();
 $result_productos = $stmt_productos->get_result();
 
@@ -219,6 +217,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['accion'])) {
 
 
 $conn->close();
+
+
 ?>
 <!DOCTYPE HTML>
 <html>
@@ -256,16 +256,6 @@ $conn->close();
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="index.php#informacion-contacto">About Us</a>
-                                </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle"  id="categoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Categorías
-                                    </a>
-                                    <ul class="dropdown-menu" aria-labelledby="categoriesDropdown">
-                                        <?php while ($categoria = $result_categorias->fetch_assoc()): ?>
-                                            <li><a class="dropdown-item" href="index.php?categoria=<?= urlencode($categoria['Categoria']) ?>"><?= htmlspecialchars($categoria['Categoria']) ?></a></li>
-                                        <?php endwhile; ?>
-                                    </ul>
                                 </li>
                                 <?php if (isset($_SESSION['id_usuario'])): ?>
                                     <!-- Mostrar opción para ver historial de compras si el usuario está autenticado -->
@@ -403,36 +393,98 @@ $conn->close();
                             <h2>Productos disponibles</h2>
                         </header>
 
+
+                        <?php
+                                $conn = new mysqli($servername, $username, $password, $dbname);
+                                if ($conn->connect_error) {
+                            die("Conexión fallida: " . $conn->connect_error);
+                            }
+
+                            // Obtener las categorías disponibles
+                            $sql_categorias = "SELECT DISTINCT Categoria FROM Productos";
+                            $result_categorias = $conn->query($sql_categorias);
+
+                            // Verificar si se ha enviado una categoría
+                            $categoria = isset($_GET['categoria']) ? $_GET['categoria'] : '';
+
+                            // Consultar productos según la categoría seleccionada
+                            if ($categoria) {
+                            $sql_productos = "SELECT * FROM Productos WHERE Categoria = '$categoria'";
+                            } else {
+                            $sql_productos = "SELECT * FROM Productos"; // Mostrar todos los productos si no hay categoría seleccionada
+                            }
+
+                            $result_productos = $conn->query($sql_productos);
+                            ?>
+
+                        <!-- Formulario de selección de categoría -->
+                        <h2>Selecciona una categoría</h2>
+                        <form action="" method="get">
+                            <select name="categoria" class="form-control" onchange="this.form.submit()">
+                                <option value="">Todas las categorías</option>
+                                <?php while ($row_categoria = $result_categorias->fetch_assoc()): ?>
+                                    <option value="<?= htmlspecialchars($row_categoria['Categoria']) ?>" <?= ($row_categoria['Categoria'] == $categoria) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($row_categoria['Categoria']) ?>
+                                    </option>
+                                <?php endwhile; ?>
+                            </select>
+                        </form>
+
+                        <hr>
+
+                        <!-- Mostrar productos -->
+                        <h2>Productos</h2>
                         <div class="row">
                             <!-- Mostrar productos filtrados por categoría -->
-                            <?php while($row = $result_productos->fetch_assoc()): ?>
-                                <div class="col-md-3 mb-4">
-                                    <div class="card">
-                                        <!-- Mostrar imagen del producto -->
-                                        <img src="../<?= htmlspecialchars($row['Fotos']) ?>" class="card-img-top" alt="<?= htmlspecialchars($row['Nombre']) ?>" style="height: 400px; object-fit: cover;">
+                            <?php
+                            // Obtener la categoría seleccionada desde la URL
+                            $categoriaSeleccionada = isset($_GET['categoria']) ? $_GET['categoria'] : '';
 
-                                        <div class="card-body">
-                                            <!-- Mostrar el nombre del producto -->
-                                            <h5 class="card-title"><?= htmlspecialchars($row['Nombre']) ?></h5>
-                                            <!-- Mostrar precio -->
-                                            <p class="card-text"><strong>Precio: $<?= number_format($row['Precio'], 2) ?> MXN</strong></p>
+                            // Consulta de productos, filtrando por categoría si es necesario
+                            $sql_productos = "SELECT * FROM Productos";
+                            if ($categoriaSeleccionada) {
+                                $sql_productos .= " WHERE Categoria = '" . $conn->real_escape_string($categoriaSeleccionada) . "'";
+                            }
+                            $result_productos = $conn->query($sql_productos);
 
-                                            <!-- Formulario para agregar al carrito -->
-                                            <form action="index.php" method="post">
-                                                <input type="hidden" name="id_producto" value="<?= $row['ID_Producto'] ?>">
-                                                <button type="submit" class="btn btn-secondary">Añadir al carrito</button>
-                                            </form>
+                            if ($result_productos->num_rows > 0):
+                                while($row_producto = $result_productos->fetch_assoc()):
+                                    ?>
+                                    <div class="col-md-3 mb-4">
+                                        <div class="card">
+                                            <!-- Mostrar imagen del producto -->
+                                            <img src="../<?= htmlspecialchars($row_producto['Fotos']) ?>" class="card-img-top" alt="<?= htmlspecialchars($row_producto['Nombre']) ?>" style="height: 200px; object-fit: cover;">
 
-                                            <!-- Formulario para ver detalles del producto -->
-                                            <form action="detalle_producto.php" method="post">
-                                                <input type="hidden" name="id_producto" value="<?= $row['ID_Producto'] ?>">
-                                                <button type="submit" class="btn btn-primary">Detalles del Producto</button>
-                                            </form>
+                                            <div class="card-body">
+                                                <!-- Mostrar el nombre del producto -->
+                                                <h5 class="card-title"><?= htmlspecialchars($row_producto['Nombre']) ?></h5>
+                                                <!-- Mostrar precio -->
+                                                <p class="card-text"><strong>Precio: $<?= number_format($row_producto['Precio'], 2) ?> MXN</strong></p>
+                                                <br>
+
+                                                <!-- Formulario para agregar al carrito -->
+                                                <form action="index.php" method="post">
+                                                    <input type="hidden" name="id_producto" value="<?= $row_producto['ID_Producto'] ?>">
+                                                    <button type="submit" class="btn btn-secondary">Añadir al carrito</button>
+                                                </form>
+                                                <br>
+
+                                                <!-- Formulario para ver detalles del producto -->
+                                                <form action="detalle_producto.php" method="post">
+                                                    <input type="hidden" name="id_producto" value="<?= $row_producto['ID_Producto'] ?>">
+                                                    <button type="submit" class="btn btn-primary">Detalles del Producto</button>
+                                                </form>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            <?php endwhile; ?>
+                                <?php endwhile; ?>
+                            <?php else: ?>
+                                <p class="text-center">No hay productos disponibles en esta categoría.</p>
+                            <?php endif; ?>
                         </div>
+
+
+
                     </section>
                 </div>
             </div>

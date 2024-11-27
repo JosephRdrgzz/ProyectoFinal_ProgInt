@@ -66,8 +66,8 @@
                         <h2 class="text-center mb-4">Inicio de sesión</h2>
                         <form action="index.php" method="POST">
                             <div class="mb-3">
-                                <label for="usuarioLog" class="form-label">Usuario</label>
-                                <input type="text" class="form-control" id="usuarioLog" name="usuario" placeholder="Nombre de usuario" required>
+                                <label for="correoLog" class="form-label">Correo Electrónico</label>
+                                <input type="email" class="form-control" id="correoLog" name="correo" placeholder="Correo electrónico" required>
                             </div>
                             <div class="mb-3">
                                 <label for="contrasenaLog" class="form-label">Contraseña</label>
@@ -76,6 +76,7 @@
                             <button type="submit" class="btn btn-primary w-100">Iniciar Sesión</button>
                         </form>
                     </div>
+
                 </div>
             </div>
         </div>
