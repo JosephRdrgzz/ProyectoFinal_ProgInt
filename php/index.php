@@ -17,19 +17,17 @@ $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
     die("Conexión fallida: " . $conn->connect_error);
 }
-
 // Manejar inicio de sesión
-if (isset($_POST['usuario']) && isset($_POST['contrasena'])) {
-    $usuario = $_POST['usuario'];
+if (isset($_POST['correo']) && isset($_POST['contrasena'])) { // Cambiar 'usuario' a 'correo'
+    $correo = $_POST['correo'];  // Ahora 'correo' en lugar de 'usuario'
     $contrasena = $_POST['contrasena'];
 
-    // Consulta para verificar las credenciales
-    $sql = "SELECT ID_Usuario, Nombre_usuario, Contraseña, administrador FROM Usuarios WHERE Nombre_usuario = ?";
+    // Consulta para verificar las credenciales (cambiar 'Nombre_usuario' por 'Correo')
+    $sql = "SELECT ID_Usuario, Nombre_usuario, Correo_electronico, Contraseña, administrador FROM Usuarios WHERE Correo_electronico = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $usuario);
+    $stmt->bind_param("s", $correo);  // Cambiar 'usuario' por 'correo'
     $stmt->execute();
     $result = $stmt->get_result();
-
 
     if ($result->num_rows == 1) {
         $row = $result->fetch_assoc();
@@ -38,6 +36,7 @@ if (isset($_POST['usuario']) && isset($_POST['contrasena'])) {
         if (password_verify($contrasena, $row['Contraseña'])) {
             $_SESSION['id_usuario'] = $row['ID_Usuario'];
             $_SESSION['nombre_usuario'] = $row['Nombre_usuario'];
+            $_SESSION['correo_usuario'] = $row['Correo'];
             $_SESSION['administrador'] = $row['administrador'];
 
             header("Location: index.php");
@@ -51,6 +50,7 @@ if (isset($_POST['usuario']) && isset($_POST['contrasena'])) {
         exit();
     }
 }
+
 
 // Obtener las categorías distintas de la base de datos
 $sql_categorias = "SELECT DISTINCT Categoria FROM Productos where Cantidad_en_almacen > 0";
@@ -231,6 +231,7 @@ $conn->close();
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
+
 <div class="container mt-5">
     <!-- Header -->
     <section id="header">
