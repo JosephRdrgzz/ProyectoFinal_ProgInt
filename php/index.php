@@ -43,17 +43,17 @@ if (isset($_POST['usuario']) && isset($_POST['contrasena'])) {
             header("Location: index.php");
             exit();
         } else {
-            header("Location: loginReg.html?error=incorrect_password");
+            header("Location: index.html?error=incorrect_password");
             exit();
         }
     } else {
-        header("Location: loginReg.html?error=user_not_found");
+        header("Location: index.html?error=user_not_found");
         exit();
     }
 }
 
 // Obtener las categorías distintas de la base de datos
-$sql_categorias = "SELECT DISTINCT Categoria FROM Productos";
+$sql_categorias = "SELECT DISTINCT Categoria FROM Productos where Cantidad_en_almacen > 0";
 $result_categorias = $conn->query($sql_categorias);
 // Obtener la categoría seleccionada desde la URL (si existe)
 $categoria = isset($_GET['categoria']) ? $_GET['categoria'] : '';
@@ -123,7 +123,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id_producto'])) {
 
 // Consulta para obtener los productos disponibles
 $sql = "SELECT ID_Producto, Nombre, Precio, Fotos FROM Productos WHERE Cantidad_en_almacen > 0";
-$result = $conn->query($sql);
+$result_productos = $conn->query($sql);
 
 
 // Mostrar mensaje si existe
@@ -142,11 +142,6 @@ if (isset($_SESSION['mensaje'])) {
 
 
 
-
-
-// Consulta para obtener los productos disponibles
-$sql = "SELECT ID_Producto, Nombre, Precio, Fotos FROM Productos WHERE Cantidad_en_almacen > 0";
-$result = $conn->query($sql);
 
 // Consultar los productos en el carrito
 $carrito = [];
@@ -231,23 +226,24 @@ $conn->close();
     <title>Catálogo</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </head>
-<body class="homepage is-preload">
-<div id="page-wrapper">
+<body>
+<div class="container mt-5">
     <!-- Header -->
     <section id="header">
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;">
+            <!-- Columna 1: Logo y subtítulo -->
             <div style="flex: 1; text-align: left;">
-                <h1><a href="index.php">Pay to win games</a></h1>
-                <h2>Códigos de juegos</h2>
+                <h1 style="font-size: 1.5rem; margin: 0;"><a href="index.php">Pay to win games</a></h1>  <!-- Reducido el tamaño del h1 -->
+                <h2 style="font-size: 1rem; margin: 0;">Códigos de juegos</h2>  <!-- Reducido el tamaño del h2 -->
             </div>
 
             <!-- Columna 2: Menú de navegación centrado -->
-            <div style="flex: 1; text-align: center;">
-                <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div style="flex: 2; text-align: center;">
+                <nav class="navbar navbar-expand-lg navbar-light" style="max-width: 80%; margin: 0 auto;">  <!-- Ajustado el ancho máximo del nav -->
                     <div class="container-fluid">
                         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                             <span class="navbar-toggler-icon"></span>
@@ -257,8 +253,11 @@ $conn->close();
                                 <li class="nav-item">
                                     <a class="nav-link active" aria-current="page" href="index.php">Home</a>
                                 </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="index.php#informacion-contacto">About Us</a>
+                                </li>
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <a class="nav-link dropdown-toggle"  id="categoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         Categorías
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="categoriesDropdown">
@@ -266,7 +265,6 @@ $conn->close();
                                             <li><a class="dropdown-item" href="index.php?categoria=<?= urlencode($categoria['Categoria']) ?>"><?= htmlspecialchars($categoria['Categoria']) ?></a></li>
                                         <?php endwhile; ?>
                                     </ul>
-
                                 </li>
                                 <?php if (isset($_SESSION['id_usuario'])): ?>
                                     <!-- Mostrar opción para ver historial de compras si el usuario está autenticado -->
@@ -286,15 +284,17 @@ $conn->close();
                                     </li>
                                 <?php endif; ?>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="loginReg.html">Cerrar Sesión</a>
+                                    <a class="nav-link" href="../index.html">Cerrar Sesión</a>
                                 </li>
                             </ul>
                         </div>
                     </div>
-                </nav>            </div>
+                </nav>
+            </div>
 
+            <!-- Columna 3: Bienvenida y botón -->
             <div style="flex: 1; text-align: right;">
-                <h3>Bienvenid@: <?php echo $_SESSION['nombre_usuario'] ?? 'Invitado'; ?></h3>
+                <h3 style="font-size: 1rem; margin: 0;">Bienvenid@: <?php echo $_SESSION['nombre_usuario'] ?? 'Invitado'; ?></h3>
                 <!-- Botón para abrir el modal -->
                 <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#carritoModal">
                     <i class="fas fa-shopping-cart"></i> Ver Carrito
@@ -329,7 +329,7 @@ $conn->close();
                             <?php foreach ($carrito as $item): ?>
                                 <tr>
                                     <td>
-                                        <img src="<?= htmlspecialchars($item['Fotos'] ?? 'ruta_default.png') ?>"
+                                        <img src="../<?= htmlspecialchars($item['Fotos'] ?? 'ruta_default.png') ?>"
                                              alt="<?= htmlspecialchars($item['Nombre']) ?>"
                                              class="img-thumbnail"
                                              style="width: 80px; height: auto;">
@@ -408,7 +408,7 @@ $conn->close();
                                 <div class="col-md-3 mb-4">
                                     <div class="card">
                                         <!-- Mostrar imagen del producto -->
-                                        <img src="<?= htmlspecialchars($row['Fotos']) ?>" class="card-img-top" alt="<?= htmlspecialchars($row['Nombre']) ?>" style="height: 400px; object-fit: cover;">
+                                        <img src="../<?= htmlspecialchars($row['Fotos']) ?>" class="card-img-top" alt="<?= htmlspecialchars($row['Nombre']) ?>" style="height: 400px; object-fit: cover;">
 
                                         <div class="card-body">
                                             <!-- Mostrar el nombre del producto -->
@@ -438,9 +438,47 @@ $conn->close();
         </div>
     </section>
 
+
+
+    <!-- Información de contacto e información adicional -->
+    <div id="informacion-contacto" class="container-fluid mt-5">
+        <div class="row justify-content-center">
+            <!-- Información de contacto -->
+            <div class="col-md-6 mb-4">
+                <div class="info-box shadow p-4 bg-white text-dark border border-dark rounded">
+                    <h3 class="text-dark">Información de Contacto</h3>
+                    <p><strong>Teléfono:</strong> 5548589636</p>
+                    <p><strong>Email:</strong> joseph.rodriguez@anahuac.mx</p>
+                    <p><strong>Dirección:</strong> Universidad Anahuac Norte</p>
+                </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="col-md-6 mb-4">
+                <div class="info-box shadow p-4 bg-white text-dark border border-dark rounded">
+                    <h3 class="text-dark">Información Adicional</h3>
+                    <p>
+                        Somos una tienda especializada en la venta de códigos de juegos digitales,
+                        específicamente los que son pay to win porque vender esos códigos es lo que
+                        de verdad deja dinero. (:
+
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
-<script src="assets/js/jquery.min.js"></script>
-<script src="assets/js/main.js"></script>
+
+
+
+
+
+
+
+
+<script src="../assets/js/jquery.min.js"></script>
+<script src="../assets/js/main.js"></script>
 </body>
 </html>

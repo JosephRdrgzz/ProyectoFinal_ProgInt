@@ -7,6 +7,80 @@
 	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
 */
 
+
+	 /* Estilo para el contenedor de información */
+ #informacion-contacto {
+	 background-color: #df244c;  /* Fondo rojo */
+	 color: #000000;  /* Texto negro */
+	 padding: 60px 20px;  /* Más espacio arriba y abajo y algo de espacio a los lados */
+ }
+
+/* Estilo para los cuadros de información */
+.info-box {
+	border: 2px solid #000000;  /* Borde negro */
+	background-color: #ffffff;  /* Fondo blanco dentro del cuadro */
+	transition: transform 0.3s ease, box-shadow 0.3s ease;
+	padding: 20px;  /* Asegurar que haya espacio interno en los cuadros */
+}
+
+.info-box:hover {
+	transform: scale(1.05);
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.info-box h3 {
+	color: #000000;  /* Títulos en negro */
+	font-weight: bold;
+	font-size: 1.8rem; /* Aumentar tamaño de los encabezados */
+	margin-bottom: 1rem;
+}
+
+.info-box p {
+	font-size: 1rem;
+	color: #000000;  /* Texto negro */
+	line-height: 1.6;
+}
+
+/* Asegurar que los cuadros de información no se toquen entre sí */
+.row {
+	margin-left: -15px;
+	margin-right: -15px;
+}
+
+.col-md-6 {
+	padding-left: 15px;
+	padding-right: 15px;
+}
+
+/* Estilo de texto destacado */
+.info-box strong {
+	color: #000000;  /* Texto destacado en negro */
+}
+
+/* Asegurar que los cuadros de información se adapten bien a pantallas grandes */
+@media (min-width: 768px) {
+	.info-box {
+		padding: 30px; /* Agregar más espacio interno en pantallas medianas y grandes */
+	}
+}
+
+/* Asegurar que los elementos no se vean tan grandes en pantallas muy pequeñas */
+@media (max-width: 576px) {
+	.info-box {
+		padding: 20px;
+	}
+
+	.info-box h3 {
+		font-size: 1.5rem; /* Ajustar tamaño de encabezados en pantallas pequeñas */
+	}
+
+	.info-box p {
+		font-size: 0.9rem; /* Reducir tamaño de texto en pantallas pequeñas */
+	}
+}
+
+
+
 html, body, div, span, applet, object,
 iframe, h1, h2, h3, h4, h5, h6, p, blockquote,
 pre, a, abbr, acronym, address, big, cite,

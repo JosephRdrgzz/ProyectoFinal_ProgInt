@@ -17,10 +17,14 @@ if ($conn->connect_error) {
 
 // Verificar si el usuario está autenticado
 if (!isset($_SESSION['id_usuario'])) {
-    die("Por favor, inicia sesión para procesar tu compra.");
+    // Redirigir al index.html si no está iniciada la sesión
+    header("Location: index.html?error=user_not_found");
+    exit();
 }
 
 $id_usuario = $_SESSION['id_usuario'];
+
+
 $mensaje = "";
 
 
@@ -49,11 +53,11 @@ if (isset($_POST['usuario']) && isset($_POST['contrasena'])) {
             header("Location: index.php");
             exit();
         } else {
-            header("Location: loginReg.html?error=incorrect_password");
+            header("Location: index.html?error=incorrect_password");
             exit();
         }
     } else {
-        header("Location: loginReg.html?error=user_not_found");
+        header("Location: index.html?error=user_not_found");
         exit();
     }
 }
@@ -140,6 +144,54 @@ if ($result_carrito->num_rows > 0) {
     $mensaje = "Tu carrito está vacío.";
 }
 
+// Manejar las acciones de aumentar o disminuir cantidad en el carrito
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['accion'])) {
+    if (isset($_SESSION['id_usuario'])) {
+        $id_producto_carrito = intval($_POST['id_producto_carrito']); // Identificar la fila específica del carrito
+        $id_usuario = $_SESSION['id_usuario'];
+        $accion = $_POST['accion']; // Acción: 'aumentar', 'disminuir', 'eliminar'
+
+        if ($accion === 'aumentar') {
+            // Aumentar la cantidad en el carrito
+            $sql_update = "UPDATE Carrito_Compras SET Cantidad = Cantidad + 1 WHERE ID_Producto_Carrito = ? AND ID_Usuario = ?";
+            $stmt_update = $conn->prepare($sql_update);
+            $stmt_update->bind_param("ii", $id_producto_carrito, $id_usuario);
+            $stmt_update->execute();
+        } elseif ($accion === 'disminuir') {
+            // Verificar la cantidad actual antes de disminuir
+            $sql_check = "SELECT Cantidad FROM Carrito_Compras WHERE ID_Producto_Carrito = ? AND ID_Usuario = ?";
+            $stmt_check = $conn->prepare($sql_check);
+            $stmt_check->bind_param("ii", $id_producto_carrito, $id_usuario);
+            $stmt_check->execute();
+            $result_check = $stmt_check->get_result();
+            $row = $result_check->fetch_assoc();
+
+            if ($row && $row['Cantidad'] > 1) {
+                // Disminuir la cantidad si es mayor a 1
+                $sql_update = "UPDATE Carrito_Compras SET Cantidad = Cantidad - 1 WHERE ID_Producto_Carrito = ? AND ID_Usuario = ?";
+                $stmt_update = $conn->prepare($sql_update);
+                $stmt_update->bind_param("ii", $id_producto_carrito, $id_usuario);
+                $stmt_update->execute();
+            } elseif ($row && $row['Cantidad'] == 1) {
+                // Si la cantidad es 1, eliminar la fila
+                $sql_delete = "DELETE FROM Carrito_Compras WHERE ID_Producto_Carrito = ? AND ID_Usuario = ?";
+                $stmt_delete = $conn->prepare($sql_delete);
+                $stmt_delete->bind_param("ii", $id_producto_carrito, $id_usuario);
+                $stmt_delete->execute();
+            }
+        } elseif ($accion === 'eliminar') {
+            // Eliminar la fila completa
+            $sql_delete = "DELETE FROM Carrito_Compras WHERE ID_Producto_Carrito = ? AND ID_Usuario = ?";
+            $stmt_delete = $conn->prepare($sql_delete);
+            $stmt_delete->bind_param("ii", $id_producto_carrito, $id_usuario);
+            $stmt_delete->execute();
+        }
+
+        // Redirigir para evitar reenvío del formulario
+        header("Location: procesar_compra.php");
+        exit();
+    }
+}
 $conn->close();
 ?>
 
@@ -150,7 +202,7 @@ $conn->close();
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 
-    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </head>
@@ -205,7 +257,7 @@ $conn->close();
                                     </li>
                                 <?php endif; ?>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="loginReg.html">Cerrar Sesión</a>
+                                    <a class="nav-link" href="../index.html">Cerrar Sesión</a>
                                 </li>
                             </ul>
                         </div>
@@ -271,7 +323,7 @@ $conn->close();
                 <?php foreach ($carrito as $item): ?>
                     <tr>
                         <td>
-                            <img src="<?= htmlspecialchars($item['Fotos']) ?>"
+                            <img src="../<?= htmlspecialchars($item['Fotos']) ?>"
                                  alt="<?= htmlspecialchars($item['Nombre']) ?>"
                                  class="img-thumbnail"
                                  style="width: 80px; height: auto;">
@@ -280,6 +332,28 @@ $conn->close();
                         <td><?= htmlspecialchars($item['Cantidad']) ?></td>
                         <td>$<?= number_format($item['Precio'], 2) ?> MXN</td>
                         <td>$<?= number_format($item['Total'], 2) ?> MXN</td>
+                        <td>
+                            <!-- Botón para aumentar -->
+                            <form action="procesar_compra.php" method="post" style="display: inline-block;">
+                                <input type="hidden" name="id_producto_carrito" value="<?= htmlspecialchars($item['ID_Producto_Carrito']) ?>">
+                                <input type="hidden" name="accion" value="aumentar">
+                                <button type="submit" class="btn btn-sm btn-success">+</button>
+                            </form>
+
+                            <form action="procesar_compra.php" method="post" style="display: inline-block;">
+                                <input type="hidden" name="id_producto_carrito" value="<?= htmlspecialchars($item['ID_Producto_Carrito']) ?>">
+                                <input type="hidden" name="accion" value="disminuir">
+                                <button type="submit" class="btn btn-sm btn-warning">-</button>
+                            </form>
+
+                            <form action="procesar_compra.php" method="post" style="display: inline-block;">
+                                <input type="hidden" name="id_producto_carrito" value="<?= htmlspecialchars($item['ID_Producto_Carrito']) ?>">
+                                <input type="hidden" name="accion" value="eliminar">
+                                <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                            </form>
+
+
+                        </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

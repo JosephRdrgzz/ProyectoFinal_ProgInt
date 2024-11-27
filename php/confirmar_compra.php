@@ -1,5 +1,5 @@
 <?php
-session_start(); // Iniciar la sesión al inicio del archivo
+session_start(); // Iniciar la sesión
 
 // Configuración de la base de datos
 $servername = "localhost";
@@ -17,10 +17,14 @@ if ($conn->connect_error) {
 
 // Verificar si el usuario está autenticado
 if (!isset($_SESSION['id_usuario'])) {
-    die("Por favor, inicia sesión para procesar tu compra.");
+    // Redirigir al index.html si no está iniciada la sesión
+    header("Location: index.html?error=user_not_found");
+    exit();
 }
 
 $id_usuario = $_SESSION['id_usuario'];
+
+
 
 
 // Manejar inicio de sesión
@@ -48,11 +52,11 @@ if (isset($_POST['usuario']) && isset($_POST['contrasena'])) {
             header("Location: index.php");
             exit();
         } else {
-            header("Location: loginReg.html?error=incorrect_password");
+            header("Location: index.html?error=incorrect_password");
             exit();
         }
     } else {
-        header("Location: loginReg.html?error=user_not_found");
+        header("Location: index.html?error=user_not_found");
         exit();
     }
 }
@@ -154,7 +158,7 @@ $conn->close();
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 
-    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </head>
@@ -209,7 +213,7 @@ $conn->close();
                                     </li>
                                 <?php endif; ?>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="loginReg.html">Cerrar Sesión</a>
+                                    <a class="nav-link" href="../index.html">Cerrar Sesión</a>
                                 </li>
                             </ul>
                         </div>
@@ -247,7 +251,7 @@ $conn->close();
             <?php foreach ($carrito as $item): ?>
                 <tr>
                     <td>
-                        <img src="<?= htmlspecialchars($item['Fotos']) ?>"
+                        <img src="../<?= htmlspecialchars($item['Fotos']) ?>"
                              alt="<?= htmlspecialchars($item['Nombre']) ?>"
                              class="img-thumbnail"
                              style="width: 80px; height: auto;">

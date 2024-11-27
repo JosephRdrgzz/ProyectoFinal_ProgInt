@@ -1,9 +1,5 @@
 <?php
-session_start();
-if (!isset($_SESSION['id_usuario']) || !$_SESSION['administrador']) {
-    header("Location: index.php");
-    exit();
-}
+session_start(); // Iniciar la sesión
 
 // Configuración de la base de datos
 $servername = "localhost";
@@ -11,11 +7,20 @@ $username = "root";
 $password = "Anahuac57";
 $dbname = "proyectofinal";
 
+// Crear conexión
 $conn = new mysqli($servername, $username, $password, $dbname);
 
+// Verificar conexión
 if ($conn->connect_error) {
     die("Conexión fallida: " . $conn->connect_error);
 }
+
+
+
+$id_usuario = $_SESSION['id_usuario'];
+
+
+
 
 
 // Manejar inicio de sesión
@@ -43,14 +48,15 @@ if (isset($_POST['usuario']) && isset($_POST['contrasena'])) {
             header("Location: index.php");
             exit();
         } else {
-            header("Location: loginReg.html?error=incorrect_password");
+            header("Location: index.html?error=incorrect_password");
             exit();
         }
     } else {
-        header("Location: loginReg.html?error=user_not_found");
+        header("Location: index.html?error=user_not_found");
         exit();
     }
 }
+
 // Obtener las categorías distintas de la base de datos
 $sql_categorias = "SELECT DISTINCT Categoria FROM Productos";
 $result_categorias = $conn->query($sql_categorias);
@@ -73,52 +79,42 @@ $result_productos = $stmt_productos->get_result();
 
 $is_admin = $_SESSION['administrador'] ?? false;
 
+if (isset($_POST['id_producto'])) {
+    $id_producto = $_POST['id_producto'];
 
-// Obtener lista de usuarios
-$sql_usuarios = "SELECT ID_Usuario, Nombre_usuario FROM Usuarios";
-$result_usuarios = $conn->query($sql_usuarios);
+    $sql = "SELECT * FROM Productos WHERE ID_Producto = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id_producto);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-// Procesar la selección de usuario
-$historial_compras = [];
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_usuario'])) {
-    $id_usuario = intval($_POST['id_usuario']);
-    $sql_historial = "
-        SELECT 
-            IFNULL(p.Nombre, 'Producto no disponible') AS Producto,
-            hc.Fecha_compra AS Fecha,
-            IFNULL(p.Precio, 0) AS Precio
-        FROM Historial_Compras hc
-        LEFT JOIN Productos p ON hc.ID_Producto = p.ID_Producto
-        WHERE hc.ID_Usuario = ?
-        ORDER BY hc.Fecha_compra DESC";
-    $stmt_historial = $conn->prepare($sql_historial);
-    $stmt_historial->bind_param("i", $id_usuario);
-    $stmt_historial->execute();
-    $result_historial = $stmt_historial->get_result();
-
-    while ($row = $result_historial->fetch_assoc()) {
-        $historial_compras[] = $row;
+    if ($result->num_rows > 0) {
+        $producto = $result->fetch_assoc();
+    } else {
+        echo "<p>Producto no encontrado.</p>";
+        exit();
     }
-    $stmt_historial->close();
+    $stmt->close();
+} else {
+    header("Location: index.php");
+    exit();
 }
-
 
 $conn->close();
 ?>
 
 <!DOCTYPE HTML>
-<html>
+<html lang="es">
 <head>
-    <title>Historial de Compras (Admin)</title>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/main.css" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Detalles del Producto</title>
 </head>
 <body>
 <div class="container mt-5">
-
     <!-- Header -->
     <section id="header">
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;">
@@ -149,6 +145,12 @@ $conn->close();
                                         <?php endwhile; ?>
                                     </ul>
                                 </li>
+                                <?php if (isset($_SESSION['id_usuario'])): ?>
+                                    <!-- Mostrar opción para ver historial de compras si el usuario está autenticado -->
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="historial_compras.php">Historial de Compras</a>
+                                    </li>
+                                <?php endif; ?>
                                 <?php if ($is_admin): ?>
                                     <li class="nav-item dropdown">
                                         <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -161,7 +163,7 @@ $conn->close();
                                     </li>
                                 <?php endif; ?>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="loginReg.html">Cerrar Sesión</a>
+                                    <a class="nav-link" href="../index.html">Cerrar Sesión</a>
                                 </li>
                             </ul>
                         </div>
@@ -170,55 +172,42 @@ $conn->close();
 
             <div style="flex: 1; text-align: right;">
                 <h3>Bienvenid@: <?php echo $_SESSION['nombre_usuario'] ?? 'Invitado'; ?></h3>
-
             </div>
         </div>
     </section>
-    <h1>Historial de Compras</h1>
 
+    <section id="main">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <div class="container mt-5">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <img src="../<?= htmlspecialchars($producto['Fotos']) ?>" class="img-fluid" alt="<?= htmlspecialchars($producto['Nombre']) ?>">
+                            </div>
+                            <div class="col-md-6">
+                                <h1><?= htmlspecialchars($producto['Nombre']) ?></h1>
+                                <p><strong>Descripción:</strong> <?= htmlspecialchars($producto['Descripcion']) ?></p>
+                                <p><strong>Precio:</strong> $<?= htmlspecialchars($producto['Precio']) ?> MXN</p>
+                                <p><strong>Cantidad en Almacén:</strong> <?= htmlspecialchars($producto['Cantidad_en_almacen']) ?></p>
+                                <p><strong>Fabricante:</strong> <?= htmlspecialchars($producto['Fabricante']) ?></p>
+                                <p><strong>Origen:</strong> <?= htmlspecialchars($producto['Origen']) ?></p>
 
-    <p>Selecciona un usuario para consultar su historial de compras.</p>
+                                <!-- Botón de añadir al carrito no completo -->
+                                <form action="index.php" method="post">
+                                    <input type="hidden" name="id_producto" value="<?= $producto['ID_Producto'] ?>">
+                                    <button type="submit" class="btn btn-success">Añadir al Carrito</button>
+                                </form>
 
-    <!-- Formulario para seleccionar usuario -->
-    <form method="post" class="mb-4">
-        <div class="mb-3">
-            <label for="id_usuario" class="form-label">Seleccionar Usuario</label>
-            <select class="form-select" id="id_usuario" name="id_usuario" required>
-                <option value="">Seleccione un usuario...</option>
-                <?php while ($usuario = $result_usuarios->fetch_assoc()): ?>
-                    <option value="<?= $usuario['ID_Usuario'] ?>" <?= isset($id_usuario) && $id_usuario == $usuario['ID_Usuario'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($usuario['Nombre_usuario']) ?>
-                    </option>
-                <?php endwhile; ?>
-            </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <button type="submit" class="btn btn-primary">Consultar Historial</button>
-    </form>
-
-    <!-- Mostrar historial de compras -->
-    <?php if (!empty($historial_compras)): ?>
-        <h2>Historial de Compras del Usuario</h2>
-        <table class="table table-bordered table-striped">
-            <thead>
-            <tr>
-                <th>Producto</th>
-                <th>Fecha de Compra</th>
-                <th>Precio</th>
-            </tr>
-            </thead>
-            <tbody>
-            <?php foreach ($historial_compras as $compra): ?>
-                <tr>
-                    <td><?= htmlspecialchars($compra['Producto']) ?></td>
-                    <td><?= htmlspecialchars($compra['Fecha']) ?></td>
-                    <td>$<?= number_format($compra['Precio'], 2) ?> MXN</td>
-                </tr>
-            <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php elseif ($_SERVER['REQUEST_METHOD'] === 'POST'): ?>
-        <div class="alert alert-warning">No se encontraron compras para el usuario seleccionado.</div>
-    <?php endif; ?>
+    </section>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
