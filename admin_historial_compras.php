@@ -51,6 +51,25 @@ if (isset($_POST['usuario']) && isset($_POST['contrasena'])) {
         exit();
     }
 }
+// Obtener las categorías distintas de la base de datos
+$sql_categorias = "SELECT DISTINCT Categoria FROM Productos";
+$result_categorias = $conn->query($sql_categorias);
+// Obtener la categoría seleccionada desde la URL (si existe)
+$categoria = isset($_GET['categoria']) ? $_GET['categoria'] : '';
+
+// Consulta para obtener productos filtrados por categoría
+if ($categoria) {
+    $sql_productos = "SELECT * FROM Productos WHERE Categoria = ?";
+    $stmt_productos = $conn->prepare($sql_productos);
+    $stmt_productos->bind_param("s", $categoria);
+} else {
+    // Si no se seleccionó categoría, mostrar todos los productos
+    $sql_productos = "SELECT * FROM Productos";
+    $stmt_productos = $conn->prepare($sql_productos);
+}
+
+$stmt_productos->execute();
+$result_productos = $stmt_productos->get_result();
 
 $is_admin = $_SESSION['administrador'] ?? false;
 
@@ -65,11 +84,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_usuario'])) {
     $id_usuario = intval($_POST['id_usuario']);
     $sql_historial = "
         SELECT 
-            p.Nombre AS Producto,
+            IFNULL(p.Nombre, 'Producto no disponible') AS Producto,
             hc.Fecha_compra AS Fecha,
-            p.Precio AS Precio
+            IFNULL(p.Precio, 0) AS Precio
         FROM Historial_Compras hc
-        INNER JOIN Productos p ON hc.ID_Producto = p.ID_Producto
+        LEFT JOIN Productos p ON hc.ID_Producto = p.ID_Producto
         WHERE hc.ID_Usuario = ?
         ORDER BY hc.Fecha_compra DESC";
     $stmt_historial = $conn->prepare($sql_historial);
@@ -82,6 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id_usuario'])) {
     }
     $stmt_historial->close();
 }
+
 
 $conn->close();
 ?>
@@ -124,10 +144,9 @@ $conn->close();
                                         Categorías
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="categoriesDropdown">
-                                        <li><a class="dropdown-item" href="#">Deportes</a></li>
-                                        <li><a class="dropdown-item" href="#">Acción</a></li>
-                                        <li><a class="dropdown-item" href="#">Mobile</a></li>
-                                        <li><a class="dropdown-item" href="#">?</a></li>
+                                        <?php while ($categoria = $result_categorias->fetch_assoc()): ?>
+                                            <li><a class="dropdown-item" href="index.php?categoria=<?= urlencode($categoria['Categoria']) ?>"><?= htmlspecialchars($categoria['Categoria']) ?></a></li>
+                                        <?php endwhile; ?>
                                     </ul>
                                 </li>
                                 <?php if ($is_admin): ?>

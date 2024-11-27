@@ -57,6 +57,25 @@ if (isset($_POST['usuario']) && isset($_POST['contrasena'])) {
         exit();
     }
 }
+// Obtener las categorías distintas de la base de datos
+$sql_categorias = "SELECT DISTINCT Categoria FROM Productos";
+$result_categorias = $conn->query($sql_categorias);
+// Obtener la categoría seleccionada desde la URL (si existe)
+$categoria = isset($_GET['categoria']) ? $_GET['categoria'] : '';
+
+// Consulta para obtener productos filtrados por categoría
+if ($categoria) {
+    $sql_productos = "SELECT * FROM Productos WHERE Categoria = ?";
+    $stmt_productos = $conn->prepare($sql_productos);
+    $stmt_productos->bind_param("s", $categoria);
+} else {
+    // Si no se seleccionó categoría, mostrar todos los productos
+    $sql_productos = "SELECT * FROM Productos";
+    $stmt_productos = $conn->prepare($sql_productos);
+}
+
+$stmt_productos->execute();
+$result_productos = $stmt_productos->get_result();
 
 $is_admin = $_SESSION['administrador'] ?? false;
 
@@ -163,12 +182,17 @@ $conn->close();
                                         Categorías
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="categoriesDropdown">
-                                        <li><a class="dropdown-item" href="#">Deportes</a></li>
-                                        <li><a class="dropdown-item" href="#">Acción</a></li>
-                                        <li><a class="dropdown-item" href="#">Mobile</a></li>
-                                        <li><a class="dropdown-item" href="#">?</a></li>
+                                        <?php while ($categoria = $result_categorias->fetch_assoc()): ?>
+                                            <li><a class="dropdown-item" href="index.php?categoria=<?= urlencode($categoria['Categoria']) ?>"><?= htmlspecialchars($categoria['Categoria']) ?></a></li>
+                                        <?php endwhile; ?>
                                     </ul>
                                 </li>
+                                <?php if (isset($_SESSION['id_usuario'])): ?>
+                                    <!-- Mostrar opción para ver historial de compras si el usuario está autenticado -->
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="historial_compras.php">Historial de Compras</a>
+                                    </li>
+                                <?php endif; ?>
                                 <?php if ($is_admin): ?>
                                     <li class="nav-item dropdown">
                                         <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">

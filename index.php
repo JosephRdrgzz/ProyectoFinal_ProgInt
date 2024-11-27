@@ -52,6 +52,32 @@ if (isset($_POST['usuario']) && isset($_POST['contrasena'])) {
     }
 }
 
+// Obtener las categorías distintas de la base de datos
+$sql_categorias = "SELECT DISTINCT Categoria FROM Productos";
+$result_categorias = $conn->query($sql_categorias);
+// Obtener la categoría seleccionada desde la URL (si existe)
+$categoria = isset($_GET['categoria']) ? $_GET['categoria'] : '';
+
+// Consulta para obtener productos filtrados por categoría
+if ($categoria) {
+    $sql_productos = "SELECT * FROM Productos WHERE Categoria = ?";
+    $stmt_productos = $conn->prepare($sql_productos);
+    $stmt_productos->bind_param("s", $categoria);
+} else {
+    // Si no se seleccionó categoría, mostrar todos los productos
+    $sql_productos = "SELECT * FROM Productos";
+    $stmt_productos = $conn->prepare($sql_productos);
+}
+
+$stmt_productos->execute();
+$result_productos = $stmt_productos->get_result();
+
+
+
+
+
+
+
 $is_admin = $_SESSION['administrador'] ?? false;
 
 // Manejar la acción de "Agregar al carrito"
@@ -236,12 +262,18 @@ $conn->close();
                                         Categorías
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="categoriesDropdown">
-                                        <li><a class="dropdown-item" href="#">Deportes</a></li>
-                                        <li><a class="dropdown-item" href="#">Acción</a></li>
-                                        <li><a class="dropdown-item" href="#">Mobile</a></li>
-                                        <li><a class="dropdown-item" href="#">?</a></li>
+                                        <?php while ($categoria = $result_categorias->fetch_assoc()): ?>
+                                            <li><a class="dropdown-item" href="index.php?categoria=<?= urlencode($categoria['Categoria']) ?>"><?= htmlspecialchars($categoria['Categoria']) ?></a></li>
+                                        <?php endwhile; ?>
                                     </ul>
+
                                 </li>
+                                <?php if (isset($_SESSION['id_usuario'])): ?>
+                                    <!-- Mostrar opción para ver historial de compras si el usuario está autenticado -->
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="historial_compras.php">Historial de Compras</a>
+                                    </li>
+                                <?php endif; ?>
                                 <?php if ($is_admin): ?>
                                     <li class="nav-item dropdown">
                                         <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -369,23 +401,32 @@ $conn->close();
                         <header class="major">
                             <h2>Productos disponibles</h2>
                         </header>
+
                         <div class="row">
-                            <?php while($row = $result->fetch_assoc()): ?>
+                            <!-- Mostrar productos filtrados por categoría -->
+                            <?php while($row = $result_productos->fetch_assoc()): ?>
                                 <div class="col-md-3 mb-4">
                                     <div class="card">
+                                        <!-- Mostrar imagen del producto -->
                                         <img src="<?= htmlspecialchars($row['Fotos']) ?>" class="card-img-top" alt="<?= htmlspecialchars($row['Nombre']) ?>" style="height: 400px; object-fit: cover;">
+
                                         <div class="card-body">
+                                            <!-- Mostrar el nombre del producto -->
                                             <h5 class="card-title"><?= htmlspecialchars($row['Nombre']) ?></h5>
-                                            <p class="card-text"><strong>Precio: $<?= htmlspecialchars($row['Precio']) ?> MXN</strong></p>
+                                            <!-- Mostrar precio -->
+                                            <p class="card-text"><strong>Precio: $<?= number_format($row['Precio'], 2) ?> MXN</strong></p>
+
+                                            <!-- Formulario para agregar al carrito -->
                                             <form action="index.php" method="post">
                                                 <input type="hidden" name="id_producto" value="<?= $row['ID_Producto'] ?>">
                                                 <button type="submit" class="btn btn-secondary">Añadir al carrito</button>
                                             </form>
+
+                                            <!-- Formulario para ver detalles del producto -->
                                             <form action="detalle_producto.php" method="post">
                                                 <input type="hidden" name="id_producto" value="<?= $row['ID_Producto'] ?>">
                                                 <button type="submit" class="btn btn-primary">Detalles del Producto</button>
                                             </form>
-
                                         </div>
                                     </div>
                                 </div>
@@ -396,6 +437,7 @@ $conn->close();
             </div>
         </div>
     </section>
+
 </div>
 
 <script src="assets/js/jquery.min.js"></script>

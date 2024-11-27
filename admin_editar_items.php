@@ -19,7 +19,6 @@ if ($conn->connect_error) {
     die("Conexión fallida: " . $conn->connect_error);
 }
 
-
 // Manejar inicio de sesión
 if (isset($_POST['usuario']) && isset($_POST['contrasena'])) {
     $usuario = $_POST['usuario'];
@@ -31,7 +30,6 @@ if (isset($_POST['usuario']) && isset($_POST['contrasena'])) {
     $stmt->bind_param("s", $usuario);
     $stmt->execute();
     $result = $stmt->get_result();
-
 
     if ($result->num_rows == 1) {
         $row = $result->fetch_assoc();
@@ -53,6 +51,25 @@ if (isset($_POST['usuario']) && isset($_POST['contrasena'])) {
         exit();
     }
 }
+// Obtener las categorías distintas de la base de datos
+$sql_categorias = "SELECT DISTINCT Categoria FROM Productos";
+$result_categorias = $conn->query($sql_categorias);
+// Obtener la categoría seleccionada desde la URL (si existe)
+$categoria = isset($_GET['categoria']) ? $_GET['categoria'] : '';
+
+// Consulta para obtener productos filtrados por categoría
+if ($categoria) {
+    $sql_productos = "SELECT * FROM Productos WHERE Categoria = ?";
+    $stmt_productos = $conn->prepare($sql_productos);
+    $stmt_productos->bind_param("s", $categoria);
+} else {
+    // Si no se seleccionó categoría, mostrar todos los productos
+    $sql_productos = "SELECT * FROM Productos";
+    $stmt_productos = $conn->prepare($sql_productos);
+}
+
+$stmt_productos->execute();
+$result_productos = $stmt_productos->get_result();
 
 $is_admin = $_SESSION['administrador'] ?? false;
 
@@ -137,14 +154,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['eliminar_producto'])) {
         // Eliminar producto
         $id_producto = intval($_POST['id_producto']);
+
+        // Eliminar producto de la tabla Productos
         $sql = "DELETE FROM Productos WHERE ID_Producto = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $id_producto);
+
         if ($stmt->execute()) {
             $mensaje = "Producto eliminado correctamente.";
         } else {
             $mensaje = "Error al eliminar el producto: " . $conn->error;
         }
+
+        $stmt->close();
     }
 }
 
@@ -154,6 +176,7 @@ $result_productos = $conn->query($sql_productos);
 
 $conn->close();
 ?>
+
 
 
 <!DOCTYPE html>
@@ -192,12 +215,17 @@ $conn->close();
                                         Categorías
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="categoriesDropdown">
-                                        <li><a class="dropdown-item" href="#">Deportes</a></li>
-                                        <li><a class="dropdown-item" href="#">Acción</a></li>
-                                        <li><a class="dropdown-item" href="#">Mobile</a></li>
-                                        <li><a class="dropdown-item" href="#">?</a></li>
+                                        <?php while ($categoria = $result_categorias->fetch_assoc()): ?>
+                                            <li><a class="dropdown-item" href="index.php?categoria=<?= urlencode($categoria['Categoria']) ?>"><?= htmlspecialchars($categoria['Categoria']) ?></a></li>
+                                        <?php endwhile; ?>
                                     </ul>
                                 </li>
+                                <?php if (isset($_SESSION['id_usuario'])): ?>
+                                    <!-- Mostrar opción para ver historial de compras si el usuario está autenticado -->
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="historial_compras.php">Historial de Compras</a>
+                                    </li>
+                                <?php endif; ?>
                                 <?php if ($is_admin): ?>
                                     <li class="nav-item dropdown">
                                         <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
